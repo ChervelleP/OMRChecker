@@ -3,13 +3,14 @@
  OMRChecker
 
  Author: Udayraj Deshmukh
- Github: https://github.com/Udayraj123
+ GitHub: https://github.com/Udayraj123
 
 """
 
 import argparse
 import sys
 from pathlib import Path
+import src.bulk_operations as bo
 
 from src.entry import entry_point
 from src.logger import logger
@@ -69,6 +70,31 @@ def parse_args():
         run again until the template is set.",
     )
 
+    argparser.add_argument(
+        "-r",
+        "--resize",
+        required=False,
+        dest="resize",
+        action="store_true",
+        help="Resize images before processing"
+    )
+
+    argparser.add_argument(
+        "-c",
+        "--convert",
+        required=False,
+        dest="convert",
+        action="store_true",
+        help="Convert from PDF or jpg to PNG "
+    )
+
+    argparser.add_argument(
+        "bulk_input",
+        nargs="?",
+        help="Input path for conversion/resizing ",
+    )
+
+
     (
         args,
         unknown,
@@ -87,6 +113,18 @@ def entry_point_for_args(args):
     if args["debug"] is True:
         # Disable tracebacks
         sys.tracebacklimit = 0
+
+    if args["convert"] or args["resize"]:
+        input_path = Path(args.get("bulk_input") or "")
+        if not input_path.exists():
+            raise ValueError(f"Input path does not exist: {input_path}")
+
+        if args["convert"]:
+            bo.convert_to_png(input_path, input_path)  # input = output
+        if args["resize"]:
+            bo.resize_images(input_path, input_path)  # input = output
+        return
+
     for root in args["input_paths"]:
         entry_point(
             Path(root),

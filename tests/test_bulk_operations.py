@@ -1,7 +1,14 @@
 import subprocess
 from pathlib import Path
 from PIL import Image
+import argparse
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Test image conversion and resizing")
+    parser.add_argument("--jpg", type=str, help="Path to jpg images folder")
+    parser.add_argument("--mixed", type=str, help="Path to mixed images folder")
+    parser.add_argument("--png", type=str, help="Path to png images folder")
+    return parser.parse_args()
 
 def run_command(args):
     """Run main.py with args like ['-c', 'some/folder']"""
@@ -23,26 +30,29 @@ def assert_all_pngs_resized(folder: Path, size=(2480, 3508)):
 
 
 if __name__ == "__main__":
-    # Set up paths
-    base_path = Path.home() / "Desktop/img_test"
-    jpg_images = base_path / "jpg_images"
-    mixed_images = base_path / "mixed_images"
-    png_images = base_path / "png_images"
 
-    print("\n Running convert on JPG images...")
-    run_command(["-c", str(jpg_images)])
-    assert_only_pngs(jpg_images)
-    print(" JPG conversion: Passed")
+    args = parse_args()
+    jpg_images = Path(args.jpg) if args.jpg else None
+    mixed_images = Path(args.mixed) if args.mixed else None
+    png_images = Path(args.png) if args.png else None
 
-    print("\n Running convert on mixed images...")
-    run_command(["-c", str(mixed_images)])
-    assert_only_pngs(mixed_images)
-    print(" Mixed conversion: Passed")
+    if jpg_images != None:
+        print("\n Running convert on JPG images...")
+        run_command(["-c", str(jpg_images)])
+        assert_only_pngs(jpg_images)
+        print(" JPG conversion: Passed")
 
-    print("\n Running resize on PNG images...")
-    run_command(["-r", str(png_images)])
-    assert_only_pngs(png_images)
-    assert_all_pngs_resized(png_images)
-    print(" PNG resizing: Passed")
+    if mixed_images != None:
+        print("\n Running convert on mixed images...")
+        run_command(["-c", str(mixed_images)])
+        assert_only_pngs(mixed_images)
+        print(" Mixed conversion: Passed")
+
+    if png_images != None:
+        print("\n Running resize on PNG images...")
+        run_command(["-r", str(png_images)])
+        assert_only_pngs(png_images)
+        assert_all_pngs_resized(png_images)
+        print(" PNG resizing: Passed")
 
     print("\n ALL TESTS PASSED!\n")

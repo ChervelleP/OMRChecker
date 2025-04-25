@@ -14,6 +14,7 @@ from time import time
 import cv2
 import pandas as pd
 from rich.table import Table
+from src.analytics import updateAnalytics, printScoreSummary
 
 from src import constants
 from src.defaults import CONFIG_DEFAULTS
@@ -183,7 +184,7 @@ def show_template_layouts(omr_files, template, tuning_config):
     for file_path in omr_files:
         file_name = file_path.name
         file_path = str(file_path)
-        in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
+        in_omr = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE) #loads the scanned sheet as a greyscale
         in_omr = template.image_instance_ops.apply_preprocessors(
             file_path, in_omr, template
         )
@@ -312,6 +313,7 @@ def process_files(
                 header=False,
                 index=False,
             )
+            updateAnalytics(file_id, score)
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
@@ -368,3 +370,5 @@ def print_stats(start_time, files_counter, tuning_config):
         log(
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
+
+printScoreSummary() #batch summary output

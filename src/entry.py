@@ -14,7 +14,7 @@ from time import time
 import cv2
 import pandas as pd
 from rich.table import Table
-from src.analytics import updateAnalytics, printScoreSummary
+from src.analytics import updateAnalytics, printScoreSummary, exportAnalyticsPDF
 
 from src import constants
 from src.defaults import CONFIG_DEFAULTS
@@ -273,15 +273,19 @@ def process_files(
             logger.info(f"Read Response: \n{omr_response}")
 
         score = 0
+        #print(f"[DEBUG]initial score for {file_id} set to 0")
         if evaluation_config is not None:
             score = evaluate_concatenated_response(
                 omr_response, evaluation_config, file_path, outputs_namespace.paths.evaluation_dir
             )
+
             logger.info(
                 f"(/{files_counter}) Graded with score: {round(score, 2)}\t for file: '{file_id}'"
             )
+            #print(f"[DEBUG] Scored {file_id} -> {score}")
         else:
             logger.info(f"(/{files_counter}) Processed file: '{file_id}'")
+        updateAnalytics(file_id, score)
 
         if tuning_config.outputs.show_image_level >= 2:
             InteractionUtils.show(
@@ -300,7 +304,9 @@ def process_files(
 
         outputs_namespace.OUTPUT_SET.append([file_name] + resp_array)
 
-        if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
+        print(f"DEBUG: writing to analytics.csv -> {file_id}, {score}")
+        if True:
+        #if multi_marked == 0 or not tuning_config.outputs.filter_out_multimarked_files:
             STATS.files_not_moved += 1
             new_file_path = save_dir.joinpath(file_id)
             # Enter into Results sheet-
@@ -313,7 +319,7 @@ def process_files(
                 header=False,
                 index=False,
             )
-            updateAnalytics(file_id, score)
+            #updateAnalytics(file_id, score)
         else:
             # multi_marked file
             logger.info(f"[{files_counter}] Found multi-marked file: '{file_id}'")
@@ -334,7 +340,8 @@ def process_files(
             #     pass
 
     print_stats(start_time, files_counter, tuning_config)
-
+    printScoreSummary()  # batch summary output
+    exportAnalyticsPDF("outputs/analytics/analytics_report.pdf")
 
 def check_and_move(error_code, file_path, filepath2):
     # TODO: fix file movement into error/multimarked/invalid etc again
@@ -371,4 +378,5 @@ def print_stats(start_time, files_counter, tuning_config):
             "\nTip: To see some awesome visuals, open config.json and increase 'show_image_level'"
         )
 
-printScoreSummary() #batch summary output
+
+
